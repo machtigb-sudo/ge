@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Factura - United Bread</title>
+<style>
+  :root{
+    --paper: #f7f2e4;
+    --paper-dark: #ece2c8;
+    --ink: #2e2a22;
+    --red: #b3402f;
+    --gray: #6b675e;
+    --gold: #b8892b;
+    --panel: #fffdf6;
+    --line: #cdbf9a;
+    --navy: #2b3a3f;
+    --total-bg: #2b3a3f;
+    --total-ink: #f2ead2;
+    --danger: #a63b32;
+    --shadow: rgba(43,58,63,0.16);
+  }
+
+  *{ box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+  html,body{
+    margin:0; padding:0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    min-height: 100vh;
+  }
+
+  .wrap{ max-width: 640px; margin: 0 auto; padding: 16px 12px 60px; }
+
+  header{ text-align:center; padding: 14px 6px 10px; }
+  header .eyebrow{
+    font-size: 10px; letter-spacing: 2.5px; text-transform: uppercase;
+    color: var(--gold); font-weight: 700;
+  }
+  header h1{
+    font-family: Georgia, "Iowan Old Style", serif; font-weight: 700;
+    font-size: 24px; margin: 4px 0 2px; color: var(--navy);
+  }
+  header .sub{ font-size: 12px; color: var(--gray); }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 12px;
+    box-shadow: 0 2px 6px var(--shadow);
+  }
+
+  .panel-title{
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; color: var(--gold); margin-bottom: 8px;
+  }
+
+  .field-row{ display:flex; gap: 8px; margin-bottom: 8px; }
+  .field-row:last-child{ margin-bottom: 0; }
+  .field{ flex: 1; min-width: 0; }
+  .field label{ display:block; font-size: 10px; color: var(--gray); font-weight: 700; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.4px; }
+  .field input, .field select{
+    width: 100%; border: 1px solid var(--line); border-radius: 8px;
+    padding: 9px 8px; font-size: 15px; background: #fff; color: var(--ink);
+    font-family: inherit;
+  }
+  .field input:focus, .field select:focus{ outline:none; border-color: var(--gold); background:#fdf3e4; }
+
+  .btn{
+    border: none; border-radius: 8px; padding: 10px 12px;
+    font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
+  }
+  .btn-gold{ background: var(--gold); color: #fff; }
+  .btn-gold:active{ opacity: 0.7; }
+  .btn-outline{ background: transparent; border: 1.5px solid var(--gold); color: var(--gold); }
+  .btn-outline:active{ background: rgba(184,137,43,0.12); }
+  .btn-danger{ background: transparent; border: 1.5px solid var(--danger); color: var(--danger); }
+  .btn-danger:active{ background: rgba(166,59,50,0.12); }
+  .btn-block{ width: 100%; margin-top: 6px; }
+
+  .ticks{
+    height: 12px; margin: 10px 0 8px;
+    background-image: repeating-linear-gradient(90deg, var(--ink) 0px, var(--ink) 1.5px, transparent 1.5px, transparent 10px);
+    background-position-y: bottom; background-size: 100% 9px; background-repeat: repeat-x; opacity: 0.45;
+  }
+
+  .col-labels{
+    display:grid;
+    grid-template-columns: 46px 1fr 64px 76px 20px;
+    gap: 6px;
+    padding: 0 4px;
+    margin-bottom: 6px;
+  }
+  .col-labels span{
+    font-size: 10px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--gray); text-align: center;
+  }
+  .col-labels span:nth-child(2){ text-align: left; padding-left: 2px; }
+
+  #rows{ display:flex; flex-direction:column; gap: 6px; }
+
+  .row{
+    display:grid;
+    grid-template-columns: 46px 1fr 64px 76px 20px;
+    gap: 6px;
+    align-items: center;
+    background: var(--panel);
+    border-radius: 9px;
+    padding: 6px;
+    border: 1px solid var(--line);
+  }
+  .row.is-credit{
+    border-color: var(--danger);
+    background: #fbeceb;
+  }
+
+  .row .desc{
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--ink);
+    line-height: 1.2;
+    padding-right: 2px;
+  }
+  .row.is-credit .desc{ color: var(--danger); font-weight: 800; letter-spacing: 0.3px; }
+
+  .row .desc-input{
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 7px 6px;
+    font-size: 13px;
+    background: #fff;
+  }
+  .row .desc-input:focus{ outline:none; border-color: var(--gold); background:#fdf3e4; }
+
+  .qty-wrap input{
+    width: 100%;
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    background: #fff;
+    font-size: 15px;
+    text-align: center;
+    padding: 8px 2px;
+    font-variant-numeric: tabular-nums;
+  }
+  .qty-wrap input:focus{ outline:none; border-color: var(--gold); background:#fdf3e4; }
+
+  .price-pair{
+    display:flex; align-items:center;
+    background: #fff; border-radius: 7px; border: 1px solid var(--line); overflow:hidden;
+  }
+  .price-pair .dollar-sign{ color: var(--red); font-weight: 700; font-size: 13px; padding-left: 5px; }
+  .price-pair input{
+    border: none; width: 100%; min-width: 0; padding: 8px 5px;
+    font-size: 15px; background: transparent; text-align: right;
+    color: var(--red); font-weight: 700; font-variant-numeric: tabular-nums;
+  }
+  .price-pair input:focus{ outline:none; background:#fdf3e4; }
+
+  .amount{
+    display:flex; align-items:center; justify-content:center;
+    font-weight: 800; font-size: 14px; color: var(--navy);
+    background: #f3ecd8; border-radius: 7px; border: 1px dashed var(--gold);
+    padding: 8px 2px; font-variant-numeric: tabular-nums;
+  }
+  .row.is-credit .amount{ color: var(--danger); border-color: var(--danger); background: #f7e3e1; }
+
+  .del-btn{
+    background: transparent; border: none; color: var(--danger);
+    font-size: 17px; cursor: pointer; padding: 0; line-height: 1;
+  }
+
+  .add-row{
+    margin-top: 10px; width: 100%; padding: 11px; border-radius: 10px;
+    border: 1.5px dashed var(--gold); background: transparent; color: var(--gold);
+    font-weight: 700; font-size: 13.5px; cursor: pointer;
+  }
+  .add-row:active{ background: rgba(184,137,43,0.12); }
+
+  .stitch{ margin: 20px 0 8px; height: 1px; border-top: 2px dashed var(--ink); opacity: 0.3; }
+  .stitch.double{ border-top: 3px double var(--ink); opacity: 0.5; margin-top: 4px; }
+
+  .summary-panel{
+    background: var(--total-bg); border-radius: 12px; padding: 14px 16px;
+    box-shadow: 0 4px 14px var(--shadow);
+  }
+  .summary-line{
+    display:flex; align-items:center; justify-content: space-between;
+    padding: 5px 0; color: var(--total-ink); font-size: 14px;
+  }
+  .summary-line .lbl{ opacity: 0.8; letter-spacing: 0.5px; text-transform: uppercase; font-size: 12px; }
+  .summary-line .val{ font-variant-numeric: tabular-nums; font-weight: 700; font-size: 16px; }
+  .summary-line.net{ border-top: 1px solid rgba(242,234,210,0.25); margin-top: 6px; padding-top: 10px; }
+  .summary-line.net .lbl{ font-size: 13px; opacity: 1; font-weight: 700; }
+  .summary-line.net .val{ font-size: 24px; font-family: Georgia, serif; }
+
+  footer{ text-align:center; font-size: 10.5px; color: var(--gray); margin-top: 16px; opacity: 0.75; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="eyebrow">United Bread</div>
+      <h1>Calculadora de Factura</h1>
+      <div class="sub">Cantidad &times; Precio Unit. = Importe</div>
+    </header>
+
+    <div class="panel">
+      <div class="panel-title">Datos de la Factura</div>
+      <div class="field-row">
+        <div class="field">
+          <label>No.</label>
+          <input type="text" id="invNo" placeholder="01105">
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="invDate">
+        </div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Vendido a</label>
+          <input type="text" id="invSoldTo" placeholder="Nombre del cliente">
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Plantilla de Precios</div>
+      <div class="field-row">
+        <div class="field">
+          <select id="templateSelect"><option value="">-- Ninguna --</option></select>
+        </div>
+        <button class="btn btn-gold" id="applyTemplateBtn">Aplicar</button>
+      </div>
+      <button class="btn btn-outline btn-block" id="saveTemplateBtn">Guardar precios actuales como plantilla</button>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Facturas Guardadas</div>
+      <div class="field-row">
+        <div class="field">
+          <select id="savedSelect"><option value="">-- Ninguna --</option></select>
+        </div>
+        <button class="btn btn-gold" id="openInvoiceBtn">Abrir</button>
+      </div>
+      <div class="field-row">
+        <button class="btn btn-outline btn-block" id="saveInvoiceBtn">Guardar factura actual</button>
+        <button class="btn btn-danger" id="deleteInvoiceBtn">Eliminar</button>
+      </div>
+      <button class="btn btn-outline btn-block" id="newInvoiceBtn">+ Nueva factura (limpiar)</button>
+    </div>
+
+    <div class="ticks"></div>
+
+    <div class="col-labels">
+      <span>Cant.</span>
+      <span>Descripci&oacute;n</span>
+      <span>Precio</span>
+      <span>Importe</span>
+      <span></span>
+    </div>
+
+    <div id="rows"></div>
+
+    <button class="add-row" id="addRowBtn" type="button">+ Agregar fila</button>
+
+    <div class="stitch"></div>
+    <div class="stitch double"></div>
+
+    <div class="summary-panel">
+      <div class="summary-line"><span class="lbl">Cargo</span><span class="val" id="chargeAmount">$0.00</span></div>
+      <div class="summary-line"><span class="lbl">Cr&eacute;dito</span><span class="val" id="creditAmount">$0.00</span></div>
+      <div class="summary-line net"><span class="lbl">Neto</span><span class="val" id="netAmount">$0.00</span></div>
+    </div>
+
+    <footer>Las casillas vac&iacute;as se completan autom&aacute;ticamente con 0</footer>
+  </div>
+
+<script>
+  const FIXED_ITEMS = [
+    "Port. Rolls", "French Bread", "Italian Bread", "Cuban Bread", "Hard Rolls",
+    "Hot Dogs", "Mini Rolls", "Melhadas", "Heroes", "Sq. W/ Wheat", "Croissants",
+    "6-Pack Raisin Bread", "Bagels", "3-Pack Muffin", "W Wheat Hero", "W W Rolls",
+    "Clam Shell", "6-Pack", "Baguette", "Garlic Bread"
+  ];
+
+  const rowsEl = document.getElementById('rows');
+  const chargeEl = document.getElementById('chargeAmount');
+  const creditEl = document.getElementById('creditAmount');
+  const netEl = document.getElementById('netAmount');
+
+  let customRowCount = 0;
+  const allRows = []; // { rowEl, desc, qtyInput, priceInput, amountEl, isCredit, isCustom }
+
+  function sanitizeDigits(el, maxLen){
+    el.value = el.value.replace(/[^0-9]/g, '').slice(0, maxLen);
+  }
+  function sanitizePrice(el){
+    let v = el.value.replace(/[^0-9.]/g, '');
+    const firstDot = v.indexOf('.');
+    if (firstDot !== -1){
+      v = v.slice(0, firstDot + 1) + v.slice(firstDot + 1).replace(/\./g, '');
+    }
+    const parts = v.split('.');
+    if (parts.length === 2){ v = parts[0] + '.' + parts[1].slice(0, 2); }
+    el.value = v;
+  }
+
+  function buildRow(desc, opts){
+    opts = opts || {};
+    const isCredit = !!opts.isCredit;
+    const isCustom = !!opts.isCustom;
+
+    const row = document.createElement('div');
+    row.className = 'row' + (isCredit ? ' is-credit' : '');
+
+    const descHtml = isCustom
+      ? `<input class="desc-input" type="text" placeholder="Descripci&oacute;n" data-role="desc-input" value="${desc || ''}">`
+      : `<div class="desc">${desc}</div>`;
+
+    row.innerHTML = `
+      <div class="qty-wrap"><input type="tel" inputmode="numeric" maxlength="6" placeholder="0" data-role="qty"></div>
+      ${descHtml}
+      <div class="price-pair"><span class="dollar-sign">$</span><input class="precio-input" type="text" inputmode="decimal" maxlength="9" placeholder="0.00" data-role="precio"></div>
+      <div class="amount" data-role="amount">$0.00</div>
+      ${isCustom ? '<button class="del-btn" type="button" data-role="del">&times;</button>' : '<span></span>'}
+    `;
+
+    const qtyInput = row.querySelector('[data-role="qty"]');
+    const priceInput = row.querySelector('[data-role="precio"]');
+    const amountEl = row.querySelector('[data-role="amount"]');
+    const descInput = row.querySelector('[data-role="desc-input"]');
+    const delBtn = row.querySelector('[data-role="del"]');
+
+    const entry = { rowEl: row, desc, qtyInput, priceInput, amountEl, descInput, isCredit, isCustom };
+
+    function recalc(){
+      const q = parseInt(qtyInput.value || '0', 10) || 0;
+      const p = parseFloat(priceInput.value || '0') || 0;
+      const raw = isCredit ? (p * q) : (p * q) / 100;
+      amountEl.textContent = '$' + raw.toFixed(2);
+      recalcSummary();
+    }
+
+    qtyInput.addEventListener('input', () => { sanitizeDigits(qtyInput, 6); recalc(); });
+    priceInput.addEventListener('input', () => { sanitizePrice(priceInput); recalc(); });
+    priceInput.addEventListener('blur', () => {
+      priceInput.value = (parseFloat(priceInput.value || '0') || 0).toFixed(2);
+      recalc();
+    });
+
+    if (delBtn){
+      delBtn.addEventListener('click', () => {
+        row.remove();
+        const idx = allRows.indexOf(entry);
+        if (idx !== -1) allRows.splice(idx, 1);
+        recalcSummary();
+      });
+    }
+
+    entry.recalc = recalc;
+    return entry;
+  }
+
+  function recalcSummary(){
+    let charge = 0, credit = 0;
+    allRows.forEach(r => {
+      const val = parseFloat(r.amountEl.textContent.replace('$', '')) || 0;
+      if (r.isCredit) credit += val; else charge += val;
+    });
+    chargeEl.textContent = '$' + charge.toFixed(2);
+    creditEl.textContent = '$' + credit.toFixed(2);
+    netEl.textContent = '$' + (charge - credit).toFixed(2);
+  }
+
+  // Build fixed item rows
+  const creditEntryHolder = {};
+  FIXED_ITEMS.forEach(desc => {
+    const entry = buildRow(desc, {});
+    rowsEl.appendChild(entry.rowEl);
+    allRows.push(entry);
+  });
+
+  // Credit row, pinned last
+  function appendCreditRow(){
+    const entry = buildRow('CREDIT', { isCredit: true });
+    rowsEl.appendChild(entry.rowEl);
+    allRows.push(entry);
+    creditEntryHolder.entry = entry;
+  }
+  appendCreditRow();
+
+  function addCustomRow(desc){
+    customRowCount++;
+    const entry = buildRow(desc || '', { isCustom: true });
+    // insert before the credit row (last child)
+    rowsEl.insertBefore(entry.rowEl, creditEntryHolder.entry.rowEl);
+    // keep in allRows, order doesn't matter for summary
+    allRows.push(entry);
+    recalcSummary();
+    return entry;
+  }
+
+  document.getElementById('addRowBtn').addEventListener('click', () => addCustomRow(''));
+
+  // ---------- Header fields ----------
+  const invNo = document.getElementById('invNo');
+  const invDate = document.getElementById('invDate');
+  const invSoldTo = document.getElementById('invSoldTo');
+  (function initDate(){
+    const d = new Date();
+    const iso = d.toISOString().slice(0, 10);
+    invDate.value = iso;
+  })();
+
+  // ---------- Storage helpers ----------
+  function storageGet(key, fallback){
+    try{
+      const raw = localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : fallback;
+    } catch(e){ return fallback; }
+  }
+  function storageSet(key, value){
+    try{ localStorage.setItem(key, JSON.stringify(value)); return true; }
+    catch(e){ alert('No se pudo guardar. El almacenamiento del navegador no est\u00e1 disponible.'); return false; }
+  }
+
+  const TEMPLATES_KEY = 'ub_price_templates_v1';
+  const INVOICES_KEY = 'ub_saved_invoices_v1';
+
+  // ---------- Price templates ----------
+  const templateSelect = document.getElementById('templateSelect');
+
+  function refreshTemplateOptions(){
+    const templates = storageGet(TEMPLATES_KEY, {});
+    templateSelect.innerHTML = '<option value="">-- Ninguna --</option>';
+    Object.keys(templates).sort().forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      templateSelect.appendChild(opt);
+    });
+  }
+  refreshTemplateOptions();
+
+  document.getElementById('applyTemplateBtn').addEventListener('click', () => {
+    const name = templateSelect.value;
+    if (!name) return;
+    const templates = storageGet(TEMPLATES_KEY, {});
+    const prices = templates[name];
+    if (!prices) return;
+    allRows.forEach(r => {
+      const key = r.isCustom ? (r.descInput ? r.descInput.value : '') : r.desc;
+      if (Object.prototype.hasOwnProperty.call(prices, key)){
+        r.priceInput.value = parseFloat(prices[key] || 0).toFixed(2);
+        r.recalc();
+      }
+    });
+  });
+
+  document.getElementById('saveTemplateBtn').addEventListener('click', () => {
+    const name = prompt('Nombre de la plantilla (ej. nombre de la tienda):');
+    if (!name) return;
+    const templates = storageGet(TEMPLATES_KEY, {});
+    const prices = {};
+    allRows.forEach(r => {
+      if (r.isCredit) return;
+      const key = r.isCustom ? (r.descInput ? r.descInput.value : '') : r.desc;
+      if (!key) return;
+      prices[key] = parseFloat(r.priceInput.value || '0') || 0;
+    });
+    templates[name] = prices;
+    if (storageSet(TEMPLATES_KEY, templates)){
+      refreshTemplateOptions();
+      templateSelect.value = name;
+      alert('Plantilla "' + name + '" guardada.');
+    }
+  });
+
+  // ---------- Saved invoices ----------
+  const savedSelect = document.getElementById('savedSelect');
+
+  function refreshSavedOptions(){
+    const invoices = storageGet(INVOICES_KEY, []);
+    savedSelect.innerHTML = '<option value="">-- Ninguna --</option>';
+    invoices.forEach((inv, idx) => {
+      const opt = document.createElement('option');
+      opt.value = idx;
+      opt.textContent = inv.name + (inv.header && inv.header.date ? ' (' + inv.header.date + ')' : '');
+      savedSelect.appendChild(opt);
+    });
+  }
+  refreshSavedOptions();
+
+  function collectCurrentState(){
+    return {
+      header: { no: invNo.value, date: invDate.value, soldTo: invSoldTo.value },
+      rows: allRows.filter(r => !r.isCredit).map(r => ({
+        desc: r.isCustom ? (r.descInput ? r.descInput.value : '') : r.desc,
+        isCustom: r.isCustom,
+        qty: r.qtyInput.value,
+        price: r.priceInput.value
+      })),
+      credit: {
+        qty: creditEntryHolder.entry.qtyInput.value,
+        price: creditEntryHolder.entry.priceInput.value
+      }
+    };
+  }
+
+  document.getElementById('saveInvoiceBtn').addEventListener('click', () => {
+    const defaultName = (invSoldTo.value || 'Factura') + (invDate.value ? ' - ' + invDate.value : '');
+    const name = prompt('Nombre para guardar esta factura:', defaultName);
+    if (!name) return;
+    const invoices = storageGet(INVOICES_KEY, []);
+    const state = collectCurrentState();
+    const existingIdx = invoices.findIndex(inv => inv.name === name);
+    const record = { name, savedAt: new Date().toISOString(), header: state.header, rows: state.rows, credit: state.credit };
+    if (existingIdx !== -1){
+      if (!confirm('Ya existe una factura con ese nombre. \u00bfReemplazarla?')) return;
+      invoices[existingIdx] = record;
+    } else {
+      invoices.push(record);
+    }
+    if (storageSet(INVOICES_KEY, invoices)){
+      refreshSavedOptions();
+      savedSelect.value = invoices.findIndex(inv => inv.name === name);
+      alert('Factura "' + name + '" guardada.');
+    }
+  });
+
+  function clearAllRows(){
+    // remove custom rows
+    allRows.filter(r => r.isCustom).forEach(r => r.rowEl.remove());
+    for (let i = allRows.length - 1; i >= 0; i--){
+      if (allRows[i].isCustom) allRows.splice(i, 1);
+    }
+    // reset fixed + credit rows
+    allRows.forEach(r => {
+      r.qtyInput.value = '';
+      r.priceInput.value = '';
+      r.recalc();
+    });
+  }
+
+  document.getElementById('openInvoiceBtn').addEventListener('click', () => {
+    const idx = savedSelect.value;
+    if (idx === '') return;
+    const invoices = storageGet(INVOICES_KEY, []);
+    const inv = invoices[parseInt(idx, 10)];
+    if (!inv) return;
+
+    clearAllRows();
+
+    invNo.value = inv.header.no || '';
+    invDate.value = inv.header.date || '';
+    invSoldTo.value = inv.header.soldTo || '';
+
+    inv.rows.forEach(savedRow => {
+      if (savedRow.isCustom){
+        const entry = addCustomRow(savedRow.desc);
+        entry.qtyInput.value = savedRow.qty || '';
+        entry.priceInput.value = savedRow.price || '';
+        entry.recalc();
+      } else {
+        const match = allRows.find(r => !r.isCustom && !r.isCredit && r.desc === savedRow.desc);
+        if (match){
+          match.qtyInput.value = savedRow.qty || '';
+          match.priceInput.value = savedRow.price || '';
+          match.recalc();
+        }
+      }
+    });
+
+    if (inv.credit){
+      creditEntryHolder.entry.qtyInput.value = inv.credit.qty || '';
+      creditEntryHolder.entry.priceInput.value = inv.credit.price || '';
+      creditEntryHolder.entry.recalc();
+    }
+
+    recalcSummary();
+  });
+
+  document.getElementById('deleteInvoiceBtn').addEventListener('click', () => {
+    const idx = savedSelect.value;
+    if (idx === '') return;
+    const invoices = storageGet(INVOICES_KEY, []);
+    const inv = invoices[parseInt(idx, 10)];
+    if (!inv) return;
+    if (!confirm('\u00bfEliminar la factura "' + inv.name + '"?')) return;
+    invoices.splice(parseInt(idx, 10), 1);
+    if (storageSet(INVOICES_KEY, invoices)){
+      refreshSavedOptions();
+    }
+  });
+
+  document.getElementById('newInvoiceBtn').addEventListener('click', () => {
+    if (!confirm('\u00bfLimpiar la factura actual?')) return;
+    clearAllRows();
+    invNo.value = '';
+    invSoldTo.value = '';
+    const d = new Date();
+    invDate.value = d.toISOString().slice(0, 10);
+    recalcSummary();
+  });
+
+  recalcSummary();
+</script>
+</body>
+</html>
